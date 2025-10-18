@@ -28,7 +28,7 @@
   <script>
     async function fetchServerInfo() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/serverinfo");
+        const res = await fetch("https://stormy-subretinal-besiegingly.ngrok-free.dev/serverinfo");
         const data = await res.json();
 
         if (data.error) {
