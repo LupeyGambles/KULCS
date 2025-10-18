@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Info Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; text-align: center; }
+    h1 { color: #00ff88; }
+    table { margin: 20px auto; border-collapse: collapse; width: 80%; }
+    th, td { border: 1px solid #333; padding: 8px; }
+    th { background: #222; }
+    tr:nth-child(even) { background: #181818; }
+    #error { color: #ff5555; }
+  </style>
+</head>
+<body>
+  <h1>🎮 Game Server Status</h1>
+  <p id="status">Loading...</p>
+  <table id="players" style="display:none;">
+    <thead>
+      <tr><th>Player</th><th>Score</th><th>Time (min)</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <p id="error"></p>
+
+  <script>
+    async function fetchServerInfo() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/serverinfo");
+        const data = await res.json();
+
+        if (data.error) {
+          document.getElementById("error").textContent = data.error;
+          return;
+        }
+
+        document.getElementById("status").innerHTML = `
+          <b>${data.server_name}</b><br>
+          Map: ${data.map} | Players: ${data.players}/${data.max_players}
+        `;
+
+        const tbody = document.querySelector("#players tbody");
+        tbody.innerHTML = "";
+        if (data.players_list.length > 0) {
+          data.players_list.forEach(p => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${p.name || "Unnamed"}</td>
+              <td>${p.score}</td>
+              <td>${(p.duration / 60).toFixed(1)}</td>
+            `;
+            tbody.appendChild(row);
+          });
+          document.getElementById("players").style.display = "table";
+        } else {
+          document.getElementById("players").style.display = "none";
+        }
+
+      } catch (err) {
+        document.getElementById("error").textContent = "Error fetching data: " + err;
+      }
+    }
+
+    // Fetch every 10 seconds
+    fetchServerInfo();
+    setInterval(fetchServerInfo, 10000);
+  </script>
+</body>
+</html>
