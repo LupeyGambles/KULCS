@@ -30,23 +30,26 @@
       try {
         const res = await fetch("https://stormy-subretinal-besiegingly.ngrok-free.dev/serverinfo");
 
-        // Read the response as text first
-        const text = await res.text();
+        const text = await res.text(); // read as text first
 
         let data;
         try {
-          // Try to parse JSON
-          data = JSON.parse(text);
-        } catch (jsonErr) {
-          // If parsing fails, the server returned HTML
-          document.getElementById("error").textContent = "Server returned invalid data. Make sure FastAPI is running and the endpoint is correct.";
+          data = JSON.parse(text); // try parsing JSON
+        } catch {
+          // ngrok confirm page or other HTML
+          document.getElementById("error").textContent = 
+            "⚠️ Cannot fetch server data. Make sure FastAPI is running and you clicked 'Confirm' on ngrok first.";
+          document.getElementById("status").textContent = "Server data unavailable";
+          document.getElementById("players").style.display = "none";
           console.error("Invalid JSON response:", text);
           return;
         }
 
-        // If the API returned an error key
+        // Check if the API returned an error
         if (data.error) {
           document.getElementById("error").textContent = data.error;
+          document.getElementById("status").textContent = "Server data unavailable";
+          document.getElementById("players").style.display = "none";
           return;
         }
 
@@ -77,10 +80,12 @@
 
       } catch (err) {
         document.getElementById("error").textContent = "Error fetching data: " + err;
+        document.getElementById("status").textContent = "Server data unavailable";
+        document.getElementById("players").style.display = "none";
       }
     }
 
-    // Fetch every 10 seconds
+    // Initial fetch and repeated every 10 seconds
     fetchServerInfo();
     setInterval(fetchServerInfo, 10000);
   </script>
