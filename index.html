@@ -29,12 +29,29 @@
     async function fetchServerInfo() {
       try {
         const res = await fetch("https://stormy-subretinal-besiegingly.ngrok-free.dev/serverinfo");
-        const data = await res.json();
 
+        // Read the response as text first
+        const text = await res.text();
+
+        let data;
+        try {
+          // Try to parse JSON
+          data = JSON.parse(text);
+        } catch (jsonErr) {
+          // If parsing fails, the server returned HTML
+          document.getElementById("error").textContent = "Server returned invalid data. Make sure FastAPI is running and the endpoint is correct.";
+          console.error("Invalid JSON response:", text);
+          return;
+        }
+
+        // If the API returned an error key
         if (data.error) {
           document.getElementById("error").textContent = data.error;
           return;
         }
+
+        // Clear any previous error
+        document.getElementById("error").textContent = "";
 
         document.getElementById("status").innerHTML = `
           <b>${data.server_name}</b><br>
@@ -43,7 +60,7 @@
 
         const tbody = document.querySelector("#players tbody");
         tbody.innerHTML = "";
-        if (data.players_list.length > 0) {
+        if (data.players_list && data.players_list.length > 0) {
           data.players_list.forEach(p => {
             const row = document.createElement("tr");
             row.innerHTML = `
