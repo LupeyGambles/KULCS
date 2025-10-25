@@ -1,4 +1,4 @@
-const apiUrl = "https://cge-api.onrender.com/serverinfo"; // your API endpoint
+const apiUrl = "https://cge-api.onrender.com/serverinfo";
 
 async function fetchServerInfo() {
   const statusEl = document.getElementById("status");
@@ -8,66 +8,43 @@ async function fetchServerInfo() {
 
   try {
     const res = await fetch(apiUrl);
-    const text = await res.text();
-
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      // Invalid JSON (ngrok confirmation page, HTML, etc.)
-      errorEl.textContent = "⚠️ Cannot fetch server data. Make sure FastAPI is running and ngrok is confirmed.";
-      statusEl.textContent = "Server data unavailable";
-      playersTable.style.display = "none";
-      console.error("Invalid JSON response:", text);
-      return;
-    }
-
-    if (data.error) {
-      errorEl.textContent = data.error;
-      statusEl.textContent = "Server data unavailable";
-      playersTable.style.display = "none";
-      return;
-    }
-
-    // Clear previous error
-    errorEl.textContent = "";
+    const data = await res.json();
 
     // Display server info
     statusEl.innerHTML = `
-      <b>${data.server_name || "Unknown Server"}</b><br>
-      Map: ${data.map || "Unknown"} | Players: ${data.players || 0}/${data.max_players || 0}
+      <b>${data.server_name || "Unknown"}</b><br>
+      Map: ${data.map || "Unknown"} | Players: ${data.players || "Unknown"}/${data.max_players || "Unknown"}
     `;
 
-    // Ensure players_list is always an array
-    const players = Array.isArray(data.players_list) ? data.players_list : [];
+    // Always display players
+    const players = Array.isArray(data.players_list) ? data.players_list : [{"name": "Unknown", "score": 0, "duration": 0}];
 
-    // Clear previous rows
     tbody.innerHTML = "";
+    players.forEach(p => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${p.name || "Unknown"}</td>
+        <td>${p.score || 0}</td>
+        <td>${p.duration ? (p.duration / 60).toFixed(1) : 0}</td>
+      `;
+      tbody.appendChild(row);
+    });
 
-    if (players.length > 0) {
-      players.forEach(p => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${p.name || "Unnamed"}</td>
-          <td>${p.score || 0}</td>
-          <td>${p.duration ? (p.duration / 60).toFixed(1) : 0}</td>
-        `;
-        tbody.appendChild(row);
-      });
-      playersTable.style.display = "table";
-    } else {
-      tbody.innerHTML = `<tr><td colspan="3">No player data available</td></tr>`;
-      playersTable.style.display = "table";
-    }
+    playersTable.style.display = "table";
+    errorEl.textContent = "";
 
   } catch (err) {
-    errorEl.textContent = "Error fetching data: " + err;
+    // If fetch fails entirely, show unknowns
     statusEl.textContent = "Server data unavailable";
-    playersTable.style.display = "none";
+    tbody.innerHTML = `
+      <tr><td>Unknown</td><td>0</td><td>0</td></tr>
+    `;
+    playersTable.style.display = "table";
+    errorEl.textContent = "Error fetching data: " + err;
     console.error(err);
   }
 }
 
-// Initial fetch and auto-refresh every 10 seconds
+// Initial fetch and refresh every 10 seconds
 fetchServerInfo();
 setInterval(fetchServerInfo, 10000);
