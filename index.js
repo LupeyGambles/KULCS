@@ -1,4 +1,4 @@
-const apiUrl = "https://cge-api.onrender.com/serverinfo"; // your API URL
+const apiUrl = "https://cge-api.onrender.com/serverinfo"; // your API endpoint
 
 async function fetchServerInfo() {
   const statusEl = document.getElementById("status");
@@ -14,7 +14,7 @@ async function fetchServerInfo() {
     try {
       data = JSON.parse(text);
     } catch {
-      // Invalid response (e.g., HTML instead of JSON)
+      // Invalid JSON (ngrok confirmation page, HTML, etc.)
       errorEl.textContent = "⚠️ Cannot fetch server data. Make sure FastAPI is running and ngrok is confirmed.";
       statusEl.textContent = "Server data unavailable";
       playersTable.style.display = "none";
@@ -22,7 +22,6 @@ async function fetchServerInfo() {
       return;
     }
 
-    // Check if API returned an error
     if (data.error) {
       errorEl.textContent = data.error;
       statusEl.textContent = "Server data unavailable";
@@ -30,7 +29,7 @@ async function fetchServerInfo() {
       return;
     }
 
-    // Clear previous errors
+    // Clear previous error
     errorEl.textContent = "";
 
     // Display server info
@@ -57,15 +56,11 @@ async function fetchServerInfo() {
       });
       playersTable.style.display = "table";
     } else {
-      // Show a message when no players are available
-      const row = document.createElement("tr");
-      row.innerHTML = `<td colspan="3">No player data available</td>`;
-      tbody.appendChild(row);
-      playersTable.style.display = "table"; // still show the table
+      tbody.innerHTML = `<tr><td colspan="3">No player data available</td></tr>`;
+      playersTable.style.display = "table";
     }
 
   } catch (err) {
-    // Network or other errors
     errorEl.textContent = "Error fetching data: " + err;
     statusEl.textContent = "Server data unavailable";
     playersTable.style.display = "none";
@@ -73,8 +68,6 @@ async function fetchServerInfo() {
   }
 }
 
-// Initial fetch
+// Initial fetch and auto-refresh every 10 seconds
 fetchServerInfo();
-
-// Refresh every 10 seconds
 setInterval(fetchServerInfo, 10000);
